@@ -1,26 +1,34 @@
 import { Injectable } from '@nestjs/common';
+import { ObjectsRepository } from './repositories/objects.repository';
 import { CreateObjectDto } from './dto/create-object.dto';
-import { UpdateObjectDto } from './dto/update-object.dto';
+import { ObjectEntity } from './entities/object.entity';
 
 @Injectable()
 export class ObjectsService {
-  create(createObjectDto: CreateObjectDto) {
-    return 'This action adds a new object';
+
+  constructor(
+    private readonly repository: ObjectsRepository,
+  ) {}
+
+  async create(dto: CreateObjectDto, imageUrl: string) {
+
+    const object = new ObjectEntity({
+      ...dto,
+      imageUrl,
+    });
+
+    return this.repository.create(object);
   }
 
   findAll() {
-    return `This action returns all objects`;
+    return this.repository.findAll();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} object`;
+  findOne(id: string) {
+    return this.repository.findById(id);
   }
 
-  update(id: number, updateObjectDto: UpdateObjectDto) {
-    return `This action updates a #${id} object`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} object`;
+  delete(id: string) {
+    return this.repository.delete(id);
   }
 }

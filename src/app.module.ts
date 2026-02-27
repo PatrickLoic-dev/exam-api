@@ -11,7 +11,5 @@ import { DatabaseModule } from './database/datababse.module';
     ObjectsModule,
     DatabaseModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule { }
