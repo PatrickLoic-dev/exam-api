@@ -13,7 +13,7 @@
     },
     "baseUrl": "",
     "basePath": "/api/v1",
-    "enableConsoleLogging": false,
+    "enableConsoleLogging": true,
     "enableFileLogging": true,
     "r2": {
         "accountId": "1e59777a5246ee582ad4b71c694ddc98",

@@ -14,20 +14,12 @@ export class Database {
     public static getInstance = (): Database => Database.instance ??= new Database();
 
     async setDatabase(): Promise<Db> {
-        const authOptions = (config.get('db.auth.user') && config.get('db.auth.password'))
-            ? {
-                auth: {
-                    username: config.get('db.auth.user'),
-                    password: config.get('db.auth.password')
-                }
-            }
-            : {};
-
         this.options = {
-            ...authOptions,
             retryWrites: true,
             retryReads: true,
             monitorCommands: config.get('env') === 'development',
+            serverSelectionTimeoutMS: 10000,
+            connectTimeoutMS: 10000,
         };
 
         const mongoUrl = this.getMongoDbURL();
@@ -35,6 +27,7 @@ export class Database {
         console.log(`[MongoDB] Connecting to: ${mongoUrl}`);
 
         const connection = await MongoClient.connect(mongoUrl, this.options);
+        await connection.db(config.get('db.name')).command({ ping: 1 });
 
         if (this.logger) {
             this.logger.log('MongoDB connected successfully');
@@ -48,8 +41,13 @@ export class Database {
     }
 
     private getMongoDbURL(): string {
+        const user = config.get('db.auth.user');
+        const password = config.get('db.auth.password');
+        const encodedUser = encodeURIComponent(user);
+        const encodedPassword = encodeURIComponent(password);
+
         return (config.get('db.auth.user') && config.get('db.auth.password'))
-            ? `mongodb+srv://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}/${config.get('db.name')}?retryWrites=true&w=majority`
+            ? `mongodb+srv://${encodedUser}:${encodedPassword}@${config.get('db.host')}/${config.get('db.name')}?retryWrites=true&w=majority`
             : `mongodb://${config.get('db.host')}/${config.get('db.name')}`;
     }
 }
