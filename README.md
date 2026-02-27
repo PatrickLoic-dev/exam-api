@@ -302,27 +302,6 @@ Ensures:
 
 ---
 
-## ✅ Evaluation Focus
-
-This backend demonstrates:
-
-* REST API design
-* File upload handling
-* Cloud storage integration
-* Realtime systems
-* Clean architecture
-* Production-level configuration management
-
----
-
-## 📌 Notes
-
-* UI design is intentionally minimal.
-* Deployment is not required.
-* Code is structured for local review.
-
----
-
 ## 👨‍💻 Author
 
 **Patrick Loïc KANGUE KWELLE**

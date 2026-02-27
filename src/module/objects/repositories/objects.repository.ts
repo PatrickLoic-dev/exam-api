@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Db, ObjectId, Collection } from 'mongodb';
+import { Db, ObjectId, Collection, WithId } from 'mongodb';
 import { ObjectEntity } from '../entities/object.entity';
+import { DATABASE_TOKEN } from '../../../common/tokens';
 
 @Injectable()
 export class ObjectsRepository {
@@ -8,7 +9,7 @@ export class ObjectsRepository {
     private collection: Collection<ObjectEntity>;
 
     constructor(
-        @Inject('DATABASE')
+        @Inject(DATABASE_TOKEN)
         private readonly db: Db,
     ) {
         this.collection = this.db.collection<ObjectEntity>('objects');
@@ -34,13 +35,13 @@ export class ObjectsRepository {
             .toArray();
     }
 
-    async findById(id: string) {
+    async findById(id: string): Promise<WithId<ObjectEntity> | null> {
         return this.collection.findOne({
             _id: new ObjectId(id),
         });
     }
 
-    async delete(id: string) {
+    async delete(id: string): Promise<WithId<ObjectEntity> | null> {
         return this.collection.findOneAndDelete({
             _id: new ObjectId(id),
         });

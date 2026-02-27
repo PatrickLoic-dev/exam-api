@@ -8,10 +8,10 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    bufferLogs: true, // Buffer logs until custom logger is ready
+    bufferLogs: true, 
   });
 
-  // Use custom logger globally
+  
   const logger = app.get(LoggerService);
   logger.setContext('Bootstrap');
   app.useLogger(logger);
@@ -21,13 +21,13 @@ async function bootstrap() {
   // ✅ Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,              // Strip properties not in DTO
-      forbidNonWhitelisted: true,   // Throw error if extra properties
-      transform: true,               // Auto-transform payloads to DTO types
+      whitelist: true,              
+      forbidNonWhitelisted: true,   
+      transform: true,               
       transformOptions: {
-        enableImplicitConversion: true, // Convert strings to numbers, etc.
+        enableImplicitConversion: true, 
       },
-      disableErrorMessages: config.get('env') === 'production', // Hide details in prod
+      disableErrorMessages: config.get('env') === 'production', 
     }),
   );
 
@@ -40,8 +40,6 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Accept',
   });
 
-  // Serve static files from the uploads directory
-  app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
   const port = config.get('port');
   const host = config.get('host');
