@@ -78,30 +78,36 @@ export const config = convict({
     default : true,
     env : 'ENABLE_FILE_LOGGING',
   },
-  s3: {
-    endpoint: {
-      doc: 'S3-compatible storage endpoint URL',
+  r2: {
+    accountId: {
+      doc: 'Cloudflare R2 account ID',
       format: String,
       default: '',
-      env: 'S3_ENDPOINT',
+      env: 'R2_ACCOUNT_ID',
     },
     accessKey: {
-      doc: 'S3 access key',
+      doc: 'R2 access key',
       format: String,
       default: '',
-      env: 'S3_ACCESS_KEY',
+      env: 'R2_ACCESS_KEY',
     },
     secretKey: {
-      doc: 'S3 secret key',
+      doc: 'R2 secret key',
       format: String,
       default: '',
-      env: 'S3_SECRET_KEY',
+      env: 'R2_SECRET_KEY',
     },
     bucket: {
-      doc: 'S3 bucket name',
+      doc: 'R2 bucket name',
       format: String,
       default: 'heyama',
-      env: 'S3_BUCKET',
+      env: 'R2_BUCKET',
+    },
+    publicUrl: {
+      doc: 'R2 public URL',
+      format: String,
+      default: '',
+      env: 'R2_PUBLIC_URL',
     },
   },
 });

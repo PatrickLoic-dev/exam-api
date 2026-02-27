@@ -4,7 +4,7 @@ Backend REST API for the **Heyama Developer Technical Assessment**.
 
 This project provides a scalable backend service that manages a collection of **Objects**, including image uploads, real-time synchronization, and data persistence.
 
-The API is built using **NestJS**, **MongoDB**, and **S3-compatible storage**, and enables both **mobile (React Native)** and **web (Next.js)** applications to interact through a centralized service.
+The API is built using **NestJS**, **MongoDB**, and **Cloudflare R2 storage**, and enables both **mobile (React Native)** and **web (Next.js)** applications to interact through a centralized service.
 
 ---
 
@@ -13,7 +13,7 @@ The API is built using **NestJS**, **MongoDB**, and **S3-compatible storage**, a
 * **Framework:** NestJS
 * **Language:** TypeScript
 * **Database:** MongoDB (Native Driver)
-* **Storage:** S3-Compatible Object Storage (Cloudflare R2 / MinIO / DigitalOcean Spaces)
+* **Storage:** Cloudflare R2 (S3-compatible)
 * **Realtime Communication:** Socket.IO
 * **File Upload:** Multer
 * **Configuration Management:** Convict
@@ -26,20 +26,19 @@ The API is built using **NestJS**, **MongoDB**, and **S3-compatible storage**, a
 ```
 src/
 │
-├── config/            # Application configuration (Convict)
-│
+├── common/            # Shared logging utilities
 ├── database/          # MongoDB connection service
-│
-├── objects/           # Objects module
-│   ├── dto/
-│   ├── objects.controller.ts
-│   ├── objects.service.ts
-│   └── objects.module.ts
-│
-├── storage/           # S3 upload & deletion logic
-│
-├── gateway/           # Socket.IO realtime gateway
-│
+├── environments/      # Environment JSON configs (Convict)
+├── module/            # Feature modules
+│   └── objects/       # Objects module
+│       ├── dto/
+│       ├── entities/
+│       ├── gateway/
+│       ├── repositories/
+│       ├── objects.controller.ts
+│       ├── objects.service.ts
+│       └── objects.module.ts
+├── storage/           # R2 upload & deletion logic
 ├── app.module.ts
 └── main.ts
 ```
@@ -53,7 +52,7 @@ src/
 ✅ Retrieve single Object
 ✅ Delete Object and associated image
 ✅ Realtime updates across clients
-✅ S3 image storage
+✅ R2 image storage
 ✅ MongoDB persistence
 ✅ Environment validation via Convict
 
@@ -67,7 +66,7 @@ Each Object contains:
 | ----------- | ------ | ------------------- |
 | title       | string | Object title        |
 | description | string | Object description  |
-| imageUrl    | string | Public S3 image URL |
+| imageUrl    | string | Public R2 image URL |
 | createdAt   | Date   | Creation timestamp  |
 
 ---
@@ -80,14 +79,23 @@ Create a `.env` file at the project root:
 
 ```
 NODE_ENV=development
-PORT=3000
+IP_ADDRESS=127.0.0.1
+HOST=127.0.0.1
+PORT=8080
 
-MONGO_URI=mongodb://localhost:27017
+DB_MONGO_HOST=127.0.0.1:27017
+DB_NAME=heyama_exam
+DB_USERNAME=
+DB_PASSWORD=
 
-S3_ENDPOINT=https://your-storage-endpoint
-S3_ACCESS_KEY=your-access-key
-S3_SECRET_KEY=your-secret-key
-S3_BUCKET=heyama
+BASE_URL=http://localhost:8080
+BASE_PATH=/api/v1
+
+R2_ACCOUNT_ID=xxxx
+R2_ACCESS_KEY=xxxx
+R2_SECRET_KEY=xxxx
+R2_BUCKET=heyama
+R2_PUBLIC_URL=https://pub-xxxxx.r2.dev
 ```
 
 Convict validates configuration at startup and prevents the application from running with invalid or missing variables.
@@ -106,14 +114,7 @@ Connection lifecycle is handled through a dedicated service initialized during a
 
 ## ☁️ Image Storage
 
-Images are uploaded to an **S3-compatible storage provider**.
-
-Supported providers include:
-
-* Cloudflare R2
-* MinIO
-* DigitalOcean Spaces
-* Any S3-compatible service (except AWS S3)
+Images are uploaded to **Cloudflare R2**.
 
 Uploaded images return a public URL stored in MongoDB.
 
@@ -147,7 +148,7 @@ object.deleted
 ### Create Object
 
 ```
-POST /objects
+POST /api/v1/objects
 ```
 
 **Content-Type:** `multipart/form-data`
@@ -160,7 +161,7 @@ POST /objects
 
 #### Behavior
 
-* Uploads image to S3 storage
+* Uploads image to R2 storage
 * Saves Object in MongoDB
 * Emits realtime event
 
@@ -169,7 +170,7 @@ POST /objects
 ### Get All Objects
 
 ```
-GET /objects
+GET /api/v1/objects
 ```
 
 Returns list of all stored Objects.
@@ -179,7 +180,7 @@ Returns list of all stored Objects.
 ### Get Single Object
 
 ```
-GET /objects/:id
+GET /api/v1/objects/:id
 ```
 
 Returns a single Object by ID.
@@ -189,13 +190,13 @@ Returns a single Object by ID.
 ### Delete Object
 
 ```
-DELETE /objects/:id
+DELETE /api/v1/objects/:id
 ```
 
 Removes:
 
 * MongoDB record
-* Stored image from S3
+* Stored image from R2
 
 Triggers realtime update.
 
@@ -230,7 +231,7 @@ npm run start:dev
 Server runs on:
 
 ```
-http://localhost:3000
+http://127.0.0.1:8080
 ```
 
 ---

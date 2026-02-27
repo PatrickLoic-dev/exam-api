@@ -15,10 +15,11 @@
     "basePath": "/api/v1",
     "enableConsoleLogging" : true,
     "enableFileLogging" : true,
-    "s3": {
-        "endpoint": "",
-        "accessKey": "",
-        "secretKey": "",
-        "bucket": "heyama"
+    "r2": {
+        "accountId": "1e59777a5246ee582ad4b71c694ddc98",
+        "accessKey": "6213c6c99ed01fcb8d264f611f2639c6",
+        "secretKey": "9d2c6445cfcdbdb835f4a3a29dc27e912456f58dfb75e04a80edfd9d3975308d",
+        "bucket": "heyama",
+        "publicUrl": "https://pub-e8bd4058bdc145f987e6099f1e3fa512.r2.dev"
     }
 }

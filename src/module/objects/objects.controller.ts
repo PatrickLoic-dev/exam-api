@@ -5,22 +5,38 @@ import {
   Delete,
   Param,
   Body,
+  Inject,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 
 import { ObjectsService } from './objects.service';
 import { CreateObjectDto } from './dto/create-object.dto';
+import type { StorageService } from 'src/storage/storage.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('objects')
 export class ObjectsController {
 
   constructor(
     private readonly service: ObjectsService,
+
+    @Inject('STORAGE_SERVICE')
+    private readonly storage: StorageService,
   ) {}
 
   @Post()
-  create(@Body() dto: CreateObjectDto) {
-    return this.service.create(dto, '');
+  @UseInterceptors(FileInterceptor('image'))
+  async create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateObjectDto,
+  ) {
+
+    const imageUrl = await this.storage.upload(file);
+
+    return this.service.create(dto, imageUrl);
   }
+
 
   @Get()
   findAll() {
