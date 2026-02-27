@@ -16,9 +16,8 @@ export class LoggerService implements NestLoggerService {
   private readonly baseLogDir = path.resolve(__dirname, '../../../logs');
   private readonly retentionDays = 90;
   private readonly levels = ['log', 'error', 'warn', 'debug', 'verbose'];
-  // Enable console logging by default (disable only if explicitly set to 'false')
-  private readonly enableConsoleLogging = config.get('enableConsoleLogging') !== false;
-  private readonly enableFileLogging = config.get('enableFileLogging') !== false;
+  private readonly enableConsoleLogging: boolean = config.get('enableConsoleLogging') === true;
+  private readonly enableFileLogging: boolean = config.get('enableFileLogging') === true;
   private context?: string;
 
   constructor() {
@@ -28,99 +27,78 @@ export class LoggerService implements NestLoggerService {
     }
   }
 
-  /**
-   * Set the context for this logger instance (e.g., 'AuthService', 'PostsController')
-   */
   setContext(context: string) {
     this.context = context;
   }
 
-  // 📂 Crée les dossiers log/error/warn...
   private ensureLogStructure() {
-    if (!fs.existsSync(this.baseLogDir)) {
-      fs.mkdirSync(this.baseLogDir, { recursive: true });
-    }
-
+    fs.mkdirSync(this.baseLogDir, { recursive: true });
     this.levels.forEach(level => {
-      const levelDir = path.join(this.baseLogDir, level);
-      if (!fs.existsSync(levelDir)) {
-        fs.mkdirSync(levelDir);
-      }
+      fs.mkdirSync(path.join(this.baseLogDir, level), { recursive: true });
     });
   }
 
-  // 🗃️ Crée le chemin du fichier pour chaque type de log
   private getLogFilePath(level: string): string {
-    const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-    const levelDir = path.join(this.baseLogDir, level);
-    return path.join(levelDir, `${date}.log`);
+    const date = new Date().toISOString().slice(0, 10);
+    return path.join(this.baseLogDir, level, `${date}.log`);
   }
 
-  // ✍️ Écrit dans le fichier approprié (async pour ne pas bloquer)
-  private writeToFile(level: string, message: string, context?: LogContext) {
-    if (!this.enableFileLogging) return;
+  private writeToFile(level: string, message: string, extraContext?: any) {
 
     const filePath = this.getLogFilePath(level);
     const timestamp = new Date().toISOString();
-    
-    // Structured logging format (JSON for easy parsing)
-    const logEntry = {
+    const ctx = this.context ?? (typeof extraContext === 'string' ? extraContext : 'Application');
+
+    const logEntry: Record<string, any> = {
       timestamp,
       level: level.toUpperCase(),
-      context: this.context || 'Application',
+      context: ctx,
       message,
-      ...context,
     };
 
+    if (extraContext && typeof extraContext === 'object') {
+      Object.assign(logEntry, extraContext);
+    }
+
     const formatted = JSON.stringify(logEntry) + '\n';
-    
-    // Async write to avoid blocking
+
     fs.appendFile(filePath, formatted, { encoding: 'utf8' }, (err) => {
-      if (err) {
-        console.error(`Failed to write log: ${err.message}`);
-      }
+      if (err) console.error(`Failed to write log: ${err.message}`);
     });
   }
 
-  // 🖥️ Écrit dans la console avec couleurs (pour dev)
-  private writeToConsole(level: string, message: string, context?: LogContext) {
-    const colors = {
-      log: '\x1b[32m',      // Green
-      error: '\x1b[31m',    // Red
-      warn: '\x1b[33m',     // Yellow
-      debug: '\x1b[36m',    // Cyan
-      verbose: '\x1b[35m',  // Magenta
+  private writeToConsole(level: string, message: string, extraContext?: any) {
+    const colors: Record<string, string> = {
+      log: '[32m',
+      error: '[31m',
+      warn: '[33m',
+      debug: '[36m',
+      verbose: '[35m',
     };
-    const reset = '\x1b[0m';
-    const color = colors[level] || reset;
-    
-    // Format time as HH:MM:SS
-    const now = new Date();
-    const time = now.toTimeString().slice(0, 8); // Extract HH:MM:SS
+    const reset = '[0m';
+    const color = colors[level] ?? reset;
+    const time = new Date().toTimeString().slice(0, 8);
+    const ctx = this.context ?? (typeof extraContext === 'string' ? extraContext : undefined);
+    const contextStr = ctx ? `[${ctx}] ` : '';
+    const metaStr = extraContext && typeof extraContext === 'object'
+      ? ` ${JSON.stringify(extraContext)}`
+      : '';
+    const formatted = `${color}[${level.toUpperCase()}]${reset} ${time} ${contextStr}${message}${metaStr}`;
 
-    const contextStr = this.context ? `[${this.context}] ` : '';
-    const metaStr = context ? ` ${JSON.stringify(context)}` : '';
-    
-    console.log(
-      `${color}[${level.toUpperCase()}]${reset} ${time} ${contextStr}${message}${metaStr}`
-    );
+    if (level === 'error') console.error(formatted);
+    else if (level === 'warn') console.warn(formatted);
+    else console.log(formatted);
   }
 
-  // 🧹 Supprime les fichiers trop anciens
   private cleanupOldLogs() {
     const now = new Date();
-
     this.levels.forEach(level => {
       const dirPath = path.join(this.baseLogDir, level);
-
-      if (!fs.existsSync(dirPath)) return;
-
       fs.readdirSync(dirPath).forEach(file => {
         const match = file.match(/^(\d{4}-\d{2}-\d{2})\.log$/);
         if (match) {
           const fileDate = new Date(match[1]);
           const diffDays = (now.getTime() - fileDate.getTime()) / (1000 * 60 * 60 * 24);
-
           if (diffDays > this.retentionDays) {
             fs.unlinkSync(path.join(dirPath, file));
           }
@@ -129,53 +107,44 @@ export class LoggerService implements NestLoggerService {
     });
   }
 
-  // 🟢 Implémentation des méthodes Nest
-  log(message: string, context?: LogContext) {
-    if (this.enableConsoleLogging) {
-      this.writeToConsole('log', message, context);
-    }
-    this.writeToFile('log', message, context);
+  log(message: any, ...optionalParams: any[]) {
+    const extra = optionalParams[0];
+    if (this.enableConsoleLogging) this.writeToConsole('log', String(message), extra);
+    if (this.enableFileLogging)    this.writeToFile('log',    String(message), extra);
   }
 
-  error(message: string, trace?: string, context?: LogContext) {
-    const errorMessage = `${message}${trace ? `\nTrace: ${trace}` : ''}`;
-    if (this.enableConsoleLogging) {
-      this.writeToConsole('error', errorMessage, context);
-    }
-    this.writeToFile('error', errorMessage, context);
+  error(message: any, ...optionalParams: any[]) {
+    const [traceOrContext, context] = optionalParams;
+    const trace = typeof traceOrContext === 'string' ? traceOrContext : undefined;
+    const extra = typeof traceOrContext === 'object' ? traceOrContext : context;
+    const errorMessage = `${message}${trace ? `
+Trace: ${trace}` : ''}`;
+    if (this.enableConsoleLogging) this.writeToConsole('error', errorMessage, extra);
+    if (this.enableFileLogging)    this.writeToFile('error',    errorMessage, extra);
   }
 
-  warn(message: string, context?: LogContext) {
-    if (this.enableConsoleLogging) {
-      this.writeToConsole('warn', message, context);
-    }
-    this.writeToFile('warn', message, context);
+  warn(message: any, ...optionalParams: any[]) {
+    const extra = optionalParams[0];
+    if (this.enableConsoleLogging) this.writeToConsole('warn', String(message), extra);
+    if (this.enableFileLogging)    this.writeToFile('warn',    String(message), extra);
   }
 
-  debug(message: string, context?: LogContext) {
-    if (this.enableConsoleLogging) {
-      this.writeToConsole('debug', message, context);
-    }
-    this.writeToFile('debug', message, context);
+  debug(message: any, ...optionalParams: any[]) {
+    const extra = optionalParams[0];
+    if (this.enableConsoleLogging) this.writeToConsole('debug', String(message), extra);
+    if (this.enableFileLogging)    this.writeToFile('debug',    String(message), extra);
   }
 
-  verbose(message: string, context?: LogContext) {
-    if (this.enableConsoleLogging) {
-      this.writeToConsole('verbose', message, context);
-    }
-    this.writeToFile('verbose', message, context);
+  verbose(message: any, ...optionalParams: any[]) {
+    const extra = optionalParams[0];
+    if (this.enableConsoleLogging) this.writeToConsole('verbose', String(message), extra);
+    if (this.enableFileLogging)    this.writeToFile('verbose',    String(message), extra);
   }
 
-  // 🔍 Additional utility methods for better context tracking
   logWithContext(level: 'log' | 'error' | 'warn' | 'debug' | 'verbose', message: string, context: LogContext) {
-    if (level === 'error') {
-      this.error(message, undefined, context);
-    } else {
-      this[level](message, context);
-    }
+    this[level](message, context);
   }
 
-  // 📊 Log HTTP requests
   logRequest(method: string, url: string, userId?: string, statusCode?: number, duration?: number) {
     this.log(`${method} ${url}`, {
       type: 'http-request',
@@ -187,7 +156,6 @@ export class LoggerService implements NestLoggerService {
     });
   }
 
-  // ⚠️ Log errors with full context
   logError(error: Error, context?: LogContext) {
     this.error(error.message, error.stack, {
       ...context,

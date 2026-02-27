@@ -11,22 +11,21 @@ import { LoggerService } from './logging.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
-    constructor(private readonly logger: LoggerService) {
-        this.logger.setContext('HTTP');
-    }
+    constructor(private readonly logger: LoggerService) {}
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const request = context.switchToHttp().getRequest();
         const { method, url, body, user } = request;
         const startTime = Date.now();
 
-        // Log incoming request
+        // Log incoming request with inline context string — does NOT overwrite instance context
         this.logger.log(`Incoming ${method} ${url}`, {
             type: 'request',
             method,
             url,
             userId: user?.id,
             body: this.sanitizeBody(body),
+            context: 'HTTP',
         });
 
         return next.handle().pipe(

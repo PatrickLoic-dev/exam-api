@@ -1,0 +1,25 @@
+{
+    "env": "production",
+    "ip": "0.0.0.0",
+    "host": "0.0.0.0",
+    "port": 8080,
+    "db": {
+        "host": "",
+        "name": "heyama_exam",
+        "auth": {
+            "user": "",
+            "password": ""
+        }
+    },
+    "baseUrl": "",
+    "basePath": "/api/v1",
+    "enableConsoleLogging": false,
+    "enableFileLogging": true,
+    "r2": {
+        "accountId": "",
+        "accessKey": "",
+        "secretKey": "",
+        "bucket": "heyama",
+        "publicUrl": ""
+    }
+}
