@@ -32,13 +32,15 @@ export class Database {
 
         const mongoUrl = this.getMongoDbURL();
 
+        console.log(`[MongoDB] Connecting to: ${mongoUrl}`);
+
         const connection = await MongoClient.connect(mongoUrl, this.options);
 
         if (this.logger) {
             this.logger.log('MongoDB connected successfully');
         }
 
-        return connection.db(config.get('db.name'));
+        return connection.db();
     }
 
     async getDatabase(): Promise<Db> {
@@ -46,14 +48,8 @@ export class Database {
     }
 
     private getMongoDbURL(): string {
-        const isProduction = config.get('env') === 'production';
-
-        if (isProduction) {
-            return `mongodb://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}`;
-        }
-
         return (config.get('db.auth.user') && config.get('db.auth.password'))
-            ? `mongodb://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}/${config.get('db.name')}?retryWrites=true&w=majority`
+            ? `mongodb+srv://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}/${config.get('db.name')}?retryWrites=true&w=majority`
             : `mongodb://${config.get('db.host')}/${config.get('db.name')}`;
     }
 }

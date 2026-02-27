@@ -4,11 +4,11 @@
     "host": "0.0.0.0",
     "port": 8080,
     "db": {
-        "host": "switchback.proxy.rlwy.net:36038",
+        "host": "initialcluster.oyuvd79.mongodb.net",
         "name": "heyama_exam",
         "auth": {
             "user": "mongo",
-            "password": "iPAWtlYYWCOYamDjgixseKYYmtkVeUWQ"
+            "password": "lb9TmJiloBCXIc8q"
         }
     },
     "baseUrl": "",

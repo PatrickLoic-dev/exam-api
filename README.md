@@ -73,9 +73,16 @@ Each Object contains:
 
 ## ⚙️ Environment Configuration
 
-Environment variables are managed using **Convict**.
+Environment variables are managed using **Convict** and loaded from JSON files under `src/environments/`.
 
-Create a `.env` file at the project root:
+The active environment is determined by the `NODE_ENV` variable:
+
+| `NODE_ENV`    | Config file                          |
+| ------------- | ------------------------------------ |
+| `development` | `src/environments/development.json`  |
+| `production`  | `src/environments/production.json`   |
+
+You can also override values using environment variables or a `.env` file at the project root:
 
 ```
 NODE_ENV=development
@@ -109,6 +116,15 @@ MongoDB is accessed using the **official MongoDB Driver**.
 No ORM or ODM (such as Mongoose) is used to maintain flexibility and performance.
 
 Connection lifecycle is handled through a dedicated service initialized during application bootstrap.
+
+### Connection Strategy
+
+The connection URL is built differently based on the environment:
+
+- **Development**: `mongodb://user:password@host/dbName?retryWrites=true&w=majority` (or without auth if not set)
+- **Production**: `mongodb://user:password@host` — the database name is selected after connection via the driver
+
+The active connection string is logged to the console at startup for debugging purposes.
 
 ---
 
@@ -228,10 +244,27 @@ docker run -d -p 27017:27017 mongo
 npm run start:dev
 ```
 
-Server runs on:
+Loads `src/environments/development.json`. Server runs on:
 
 ```
 http://127.0.0.1:8080
+```
+
+---
+
+### 4. Run in production mode
+
+```
+npm run start
+```
+
+Sets `NODE_ENV=production` via `cross-env` and loads `src/environments/production.json`.
+
+To build first then run the compiled output:
+
+```
+npm run build
+npm run start:prod
 ```
 
 ---
