@@ -38,7 +38,7 @@ export class Database {
             this.logger.log('MongoDB connected successfully');
         }
 
-        return connection.db();
+        return connection.db(config.get('db.name'));
     }
 
     async getDatabase(): Promise<Db> {
@@ -46,6 +46,12 @@ export class Database {
     }
 
     private getMongoDbURL(): string {
+        const isProduction = config.get('env') === 'production';
+
+        if (isProduction) {
+            return `mongodb://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}`;
+        }
+
         return (config.get('db.auth.user') && config.get('db.auth.password'))
             ? `mongodb://${config.get('db.auth.user')}:${config.get('db.auth.password')}@${config.get('db.host')}/${config.get('db.name')}?retryWrites=true&w=majority`
             : `mongodb://${config.get('db.host')}/${config.get('db.name')}`;
