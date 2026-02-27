@@ -1,98 +1,338 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Heyama Objects API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend REST API for the **Heyama Developer Technical Assessment**.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This project provides a scalable backend service that manages a collection of **Objects**, including image uploads, real-time synchronization, and data persistence.
 
-## Description
+The API is built using **NestJS**, **MongoDB**, and **S3-compatible storage**, and enables both **mobile (React Native)** and **web (Next.js)** applications to interact through a centralized service.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## 🚀 Tech Stack
 
-```bash
-$ npm install
+* **Framework:** NestJS
+* **Language:** TypeScript
+* **Database:** MongoDB (Native Driver)
+* **Storage:** S3-Compatible Object Storage (Cloudflare R2 / MinIO / DigitalOcean Spaces)
+* **Realtime Communication:** Socket.IO
+* **File Upload:** Multer
+* **Configuration Management:** Convict
+* **Architecture Style:** Modular & Scalable REST API
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+│
+├── config/            # Application configuration (Convict)
+│
+├── database/          # MongoDB connection service
+│
+├── objects/           # Objects module
+│   ├── dto/
+│   ├── objects.controller.ts
+│   ├── objects.service.ts
+│   └── objects.module.ts
+│
+├── storage/           # S3 upload & deletion logic
+│
+├── gateway/           # Socket.IO realtime gateway
+│
+├── app.module.ts
+└── main.ts
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 📦 Features
 
-# watch mode
-$ npm run start:dev
+✅ Create Objects with image upload
+✅ Retrieve all Objects
+✅ Retrieve single Object
+✅ Delete Object and associated image
+✅ Realtime updates across clients
+✅ S3 image storage
+✅ MongoDB persistence
+✅ Environment validation via Convict
 
-# production mode
-$ npm run start:prod
+---
+
+## 🧱 Object Model
+
+Each Object contains:
+
+| Field       | Type   | Description         |
+| ----------- | ------ | ------------------- |
+| title       | string | Object title        |
+| description | string | Object description  |
+| imageUrl    | string | Public S3 image URL |
+| createdAt   | Date   | Creation timestamp  |
+
+---
+
+## ⚙️ Environment Configuration
+
+Environment variables are managed using **Convict**.
+
+Create a `.env` file at the project root:
+
+```
+NODE_ENV=development
+PORT=3000
+
+MONGO_URI=mongodb://localhost:27017
+
+S3_ENDPOINT=https://your-storage-endpoint
+S3_ACCESS_KEY=your-access-key
+S3_SECRET_KEY=your-secret-key
+S3_BUCKET=heyama
 ```
 
-## Run tests
+Convict validates configuration at startup and prevents the application from running with invalid or missing variables.
 
-```bash
-# unit tests
-$ npm run test
+---
 
-# e2e tests
-$ npm run test:e2e
+## 🗄️ Database
 
-# test coverage
-$ npm run test:cov
+MongoDB is accessed using the **official MongoDB Driver**.
+
+No ORM or ODM (such as Mongoose) is used to maintain flexibility and performance.
+
+Connection lifecycle is handled through a dedicated service initialized during application bootstrap.
+
+---
+
+## ☁️ Image Storage
+
+Images are uploaded to an **S3-compatible storage provider**.
+
+Supported providers include:
+
+* Cloudflare R2
+* MinIO
+* DigitalOcean Spaces
+* Any S3-compatible service (except AWS S3)
+
+Uploaded images return a public URL stored in MongoDB.
+
+When an object is deleted:
+
+* Database record is removed
+* Associated image is deleted from storage
+
+---
+
+## 🔌 Realtime Updates
+
+The API uses **Socket.IO** to broadcast updates.
+
+Whenever an Object is created or deleted:
+
+* All connected mobile clients receive updates instantly
+* All connected web clients synchronize automatically
+
+Event examples:
+
+```
+object.created
+object.deleted
 ```
 
-## Deployment
+---
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+## 📡 REST API Endpoints
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Create Object
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+```
+POST /objects
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Content-Type:** `multipart/form-data`
 
-## Resources
+#### Body
 
-Check out a few resources that may come in handy when working with NestJS:
+* `title` (string)
+* `description` (string)
+* `image` (file)
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+#### Behavior
 
-## Support
+* Uploads image to S3 storage
+* Saves Object in MongoDB
+* Emits realtime event
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+### Get All Objects
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```
+GET /objects
+```
 
-## License
+Returns list of all stored Objects.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+### Get Single Object
+
+```
+GET /objects/:id
+```
+
+Returns a single Object by ID.
+
+---
+
+### Delete Object
+
+```
+DELETE /objects/:id
+```
+
+Removes:
+
+* MongoDB record
+* Stored image from S3
+
+Triggers realtime update.
+
+---
+
+## ▶️ Running the Project
+
+### 1. Install dependencies
+
+```
+npm install
+```
+
+---
+
+### 2. Start MongoDB
+
+Example using Docker:
+
+```
+docker run -d -p 27017:27017 mongo
+```
+
+---
+
+### 3. Run development server
+
+```
+npm run start:dev
+```
+
+Server runs on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## 🧪 API Testing
+
+You can test endpoints using:
+
+* Postman
+* Insomnia
+* Thunder Client
+* Curl
+
+Example:
+
+```
+POST /objects
+multipart/form-data
+```
+
+---
+
+## 🔄 Realtime Testing
+
+Open both:
+
+* Mobile App
+* Web App
+
+Create an Object from one client.
+
+The new Object should appear instantly on all connected clients.
+
+---
+
+## 🧠 Architectural Decisions
+
+### Native MongoDB Driver
+
+Chosen for:
+
+* Performance
+* Full control
+* Reduced abstraction
+* Lightweight dependency footprint
+
+---
+
+### Convict Configuration
+
+Provides:
+
+* Schema validation
+* Centralized configuration
+* Environment safety
+* Production readiness
+
+---
+
+### Modular NestJS Design
+
+Ensures:
+
+* Separation of concerns
+* Maintainability
+* Scalability
+* Testability
+
+---
+
+## ✅ Evaluation Focus
+
+This backend demonstrates:
+
+* REST API design
+* File upload handling
+* Cloud storage integration
+* Realtime systems
+* Clean architecture
+* Production-level configuration management
+
+---
+
+## 📌 Notes
+
+* UI design is intentionally minimal.
+* Deployment is not required.
+* Code is structured for local review.
+
+---
+
+## 👨‍💻 Author
+
+**Patrick Loïc KANGUE KWELLE**
+Fullstack Developer
+
+Portfolio:
+https://kangueloic.me
+
+---
+
+## 📄 License
+
+This project is developed as part of the **Heyama Developer Technical Assessment**.
+All code is original and created by the author for this assessment.
