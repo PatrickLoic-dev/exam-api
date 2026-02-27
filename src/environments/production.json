@@ -7,8 +7,8 @@
         "host": "switchback.proxy.rlwy.net:36038",
         "name": "heyama_exam",
         "auth": {
-            "user": "",
-            "password": ""
+            "user": "mongo",
+            "password": "eKxHpYKvKXcwoDALAwTHHGUwVfyuyllk"
         }
     },
     "baseUrl": "",
